@@ -139,7 +139,13 @@ public strictfp class RobotPlayer {
                 while (rc.canMineGold(mineLocation)) {
                     rc.mineGold(mineLocation);
                 }
-                while (rc.canMineLead(mineLocation) || rc.senseLead(loc)) {
+                // senseLead returns the amount of lead, so you need to do a bit more to
+                // get a Boolean in this context. It also seems like canMineLead already
+                // checks for non-zero amounts of lead (i.e. it uses senseLead internally maybe).
+                // It seems redundant? I could be wrong, but be sure of your intent.
+                // I recall the lecture saying lead re-grows if you leave some behind, so maybe
+                // you want " can mine lead and there's more than 1 lead left (or some amount not zero)
+                while (rc.canMineLead(mineLocation) || (rc.senseLead(mineLocation) > 0) ) {
                     rc.mineLead(mineLocation);
                 }
             }
