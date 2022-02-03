@@ -75,7 +75,7 @@ public strictfp class RobotPlayer {
                     case SOLDIER:    runSoldier(rc); break;
                     case LABORATORY: // Examplefuncsplayer doesn't use any of these robot types below.
                     case WATCHTOWER: // You might want to give them a try!
-                    case BUILDER:
+                    case BUILDER:    runBuilder(rc); break;
                     case SAGE:       break;
                 }
             } catch (GameActionException e) {
@@ -139,7 +139,7 @@ public strictfp class RobotPlayer {
                 while (rc.canMineGold(mineLocation)) {
                     rc.mineGold(mineLocation);
                 }
-                while (rc.canMineLead(mineLocation) || rc.senseLead(loc)) {
+                while (rc.canMineLead(mineLocation) || rc.senseLead(mineLocation) > 1) {
                     rc.mineLead(mineLocation);
                 }
             }
@@ -170,6 +170,26 @@ public strictfp class RobotPlayer {
         }
 
         // Also try to move randomly.
+        Direction dir = directions[rng.nextInt(directions.length)];
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+            System.out.println("I moved!");
+        }
+    }
+
+    static void runBuilder(RobotController rc) throws GameActionException {
+        // repair nearby buildings
+        MapLocation me = rc.getLocation();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+            MapLocation repLocation = new MapLocation(me.x + dx, me.y + dy);
+            while (rc.canRepair(repLocation)) {
+                rc.repair(repLocation);
+            }
+
+            }
+        }
+        // move randomly
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
