@@ -145,6 +145,22 @@ public strictfp class RobotPlayer {
             }
         }
 
+        int visionRadius = rc.getType().visionRadiusSquared;
+        MapLocation[] nearbyLocations = rc.getAllLocationsWithinRadiusSquared(me,visionRadius);
+        MapLocation targetLocation = null;
+        for (MapLocation tryLocation : nearbyLocations){
+            if (rc.senseLead(tryLocation)>0 || rc.senseGold(tryLocation)>0){
+                targetLocation = tryLocation;
+                break;
+            }
+        }
+        if (targetLocation!=null){
+            Direction toMove = me.directionTo(targetLocation);
+            if (rc.canMove(toMove)){
+                rc.move(toMove);
+            }
+        }
+
         // Also try to move randomly.
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) {
