@@ -15,8 +15,17 @@ strictfp class SoldierStrat {
                 rc.attack(toAttack);
             }
         }
+        /*
+         sense if archon, then get location, and all soldiers move to enemy archon
+                // use getLocation(),create dir of enemy ARCHON then rc.move(dir)
+                if (robotType.ARCHON){
 
-        // Also try to move randomly.
+                    if (rc.canAttack(toAttack)) {
+                        rc.attack(toAttack);
+                    }
+                }
+         Also try to move randomly.
+        */
         Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
