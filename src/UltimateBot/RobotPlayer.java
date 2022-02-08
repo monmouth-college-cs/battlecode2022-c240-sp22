@@ -1,11 +1,12 @@
-package senseLead;
+package UltimateBot;
 
 import battlecode.common.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**
- * RobotPlayer is the class that describes your main robot strategy.
+ * addcahngestoRobotPlayer.RobotPlayer is the class that describes your main robot strategy.
  * The run() method inside this class is like your main function: this is what we'll call once your robot
  * is created!
  */
@@ -74,8 +75,8 @@ public strictfp class RobotPlayer {
                     case MINER:      runMiner(rc);   break;
                     case SOLDIER:    runSoldier(rc); break;
                     case LABORATORY: // Examplefuncsplayer doesn't use any of these robot types below.
-                    case WATCHTOWER: // You might want to give them a try!
-                    case BUILDER:    runBuilder(rc); break;
+                    case WATCHTOWER: runWatchTower(rc); break;// You might want to give them a try!
+                    case BUILDER:   runBuilder(rc); break;
                     case SAGE:       break;
                 }
             } catch (GameActionException e) {
@@ -106,21 +107,48 @@ public strictfp class RobotPlayer {
      * Run a single turn for an Archon.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
+    static int miners = 0, soldiers = 0, builders = 0, watchtower = 0;
+
     static void runArchon(RobotController rc) throws GameActionException {
-        // Pick a direction to build in.
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rng.nextBoolean()) {
-            // Let's try to build a miner.
-            rc.setIndicatorString("Trying to build a miner");
-            if (rc.canBuildRobot(RobotType.MINER, dir)) {
-                rc.buildRobot(RobotType.MINER, dir);
-            }
+       if(miners < 10) {
+           buildTowardsLowRubble(rc, RobotType.MINER);
+        } else if (soldiers < 10){
+            buildTowardsLowRubble(rc, RobotType.SOLDIER);
+        } else if (builders < 1) {
+            buildTowardsLowRubble(rc, RobotType.BUILDER);
+        } else if (watchtower <1) {
+           buildTowardsLowRubble(rc, RobotType.WATCHTOWER);
+        } else if (miners < soldiers / 2 && rc.getTeamLeadAmount(rc.getTeam()) < 5000) {
+            buildTowardsLowRubble(rc, RobotType.MINER);
+        } else if (builders < soldiers / 10) {
+            buildTowardsLowRubble(rc, RobotType.BUILDER);
         } else {
-            // Let's try to build a soldier.
-            rc.setIndicatorString("Trying to build a soldier");
-            if (rc.canBuildRobot(RobotType.SOLDIER, dir)) {
-                rc.buildRobot(RobotType.SOLDIER, dir);
+           buildTowardsLowRubble(rc, RobotType.SOLDIER);
+        }
+    }
+    static void buildTowardsLowRubble(RobotController rc, RobotType type) throws GameActionException {
+        Direction[] dirs = Arrays.copyOf(RobotPlayer.directions, RobotPlayer.directions.length);
+        Arrays.sort(dirs, (a, b) -> getRubble(rc, a) - getRubble(rc, b));
+        for (Direction d : dirs){
+            if(rc.canBuildRobot(type, d)){
+                rc.buildRobot(type, d);
+                switch(type){
+                    case MINER: miners++; break;
+                    case SOLDIER: soldiers++; break;
+                    case BUILDER: builders++; break;
+                    case WATCHTOWER: watchtower++; break;
+                    default: break;
+                }
             }
+        }
+    }
+    static int getRubble(RobotController rc, Direction d){
+        try {
+            MapLocation loc = rc.getLocation().add(d);
+            return rc.senseRubble(loc);
+        } catch (GameActionException e){
+            e.printStackTrace();
+            return 0;
         }
     }
 
@@ -139,10 +167,25 @@ public strictfp class RobotPlayer {
                 while (rc.canMineGold(mineLocation)) {
                     rc.mineGold(mineLocation);
                 }
-
-                while (rc.canMineLead(mineLocation) || rc.senseLead(mineLocation) > 1) {
+                while ((rc.canMineLead(mineLocation)) || rc.senseLead(mineLocation) > 1) {
                     rc.mineLead(mineLocation);
                 }
+            }
+        }
+
+        int visionRadius = rc.getType().visionRadiusSquared;
+        MapLocation[] nearbyLocations = rc.getAllLocationsWithinRadiusSquared(me,visionRadius);
+        MapLocation targetLocation = null;
+        for (MapLocation tryLocation : nearbyLocations){
+            if (rc.senseLead(tryLocation)>0 || rc.senseGold(tryLocation)>0){
+                targetLocation = tryLocation;
+                break;
+            }
+        }
+        if (targetLocation!=null){
+            Direction toMove = me.directionTo(targetLocation);
+            if (rc.canMove(toMove)){
+                rc.move(toMove);
             }
         }
 
@@ -163,12 +206,15 @@ public strictfp class RobotPlayer {
         int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
-        if (enemies.length > 0) {
+        if (enemies.length>0) {
             MapLocation toAttack = enemies[0].location;
             if (rc.canAttack(toAttack)) {
                 rc.attack(toAttack);
+                }
             }
-        }
+
+
+
 
         // Also try to move randomly.
         Direction dir = directions[rng.nextInt(directions.length)];
@@ -178,19 +224,40 @@ public strictfp class RobotPlayer {
         }
     }
 
+
     static void runBuilder(RobotController rc) throws GameActionException {
         // repair nearby buildings
         MapLocation me = rc.getLocation();
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
-            MapLocation repLocation = new MapLocation(me.x + dx, me.y + dy);
-            while (rc.canRepair(repLocation)) {
-                rc.repair(repLocation);
-            }
+                MapLocation repLocation = new MapLocation(me.x + dx, me.y + dy);
+                while (rc.canRepair(repLocation)) {
+                    rc.repair(repLocation);
+                }
 
             }
         }
         // move randomly
+        Direction dir = directions[rng.nextInt(directions.length)];
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+            System.out.println("I moved!");
+        }
+    }
+
+    static void runWatchTower(RobotController rc) throws GameActionException {
+        // Try to attack someone
+        int radius = rc.getType().actionRadiusSquared;
+        Team opponent = rc.getTeam().opponent();
+        RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
+        if (enemies.length > 0) {
+            MapLocation toAttack = enemies[0].location;
+            if (rc.canAttack(toAttack)) {
+                rc.attack(toAttack);
+            }
+        }
+
+        // Also try to move randomly.
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
