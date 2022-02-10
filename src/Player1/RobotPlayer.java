@@ -81,7 +81,8 @@ public strictfp class RobotPlayer {
                     case SOLDIER:
                         SoldierStrat.runSoldier(rc);
                         break;
-                    case LABORATORY: // Examplefuncsplayer doesn't use any of these robot types below.
+                    case LABORATORY:
+                        LabStrat.runLaboratory(rc);
                     case WATCHTOWER:
                         WatchTowerStrat.runWatchTower(rc);
                         break;              // You might want to give them a try!
