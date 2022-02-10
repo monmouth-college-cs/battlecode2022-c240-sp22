@@ -110,14 +110,12 @@ public strictfp class RobotPlayer {
     static int miners = 0, soldiers = 0, builders = 0, watchtower = 0;
 
     static void runArchon(RobotController rc) throws GameActionException {
-       if(miners < 10) {
+       if(miners < 20) {
            buildTowardsLowRubble(rc, RobotType.MINER);
-        } else if (soldiers < 10){
+        } else if (soldiers < 20){
             buildTowardsLowRubble(rc, RobotType.SOLDIER);
-        } else if (builders < 1) {
+        } else if (builders < 4) {
             buildTowardsLowRubble(rc, RobotType.BUILDER);
-        } else if (watchtower <1) {
-           buildTowardsLowRubble(rc, RobotType.WATCHTOWER);
         } else if (miners < soldiers / 2 && rc.getTeamLeadAmount(rc.getTeam()) < 5000) {
             buildTowardsLowRubble(rc, RobotType.MINER);
         } else if (builders < soldiers / 10) {
@@ -243,6 +241,14 @@ public strictfp class RobotPlayer {
             rc.move(dir);
             System.out.println("I moved!");
         }
+
+        //build new buildings
+        MapLocation myLocation = rc.getLocation();
+        Direction newDirection = Direction.NORTH;
+        while (rc.canBuildRobot(RobotType.WATCHTOWER,newDirection)){
+            buildTowardsLowRubble(rc, RobotType.WATCHTOWER);
+        }
+
     }
 
     static void runWatchTower(RobotController rc) throws GameActionException {
@@ -255,13 +261,6 @@ public strictfp class RobotPlayer {
             if (rc.canAttack(toAttack)) {
                 rc.attack(toAttack);
             }
-        }
-
-        // Also try to move randomly.
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-            System.out.println("I moved!");
         }
     }
 }
