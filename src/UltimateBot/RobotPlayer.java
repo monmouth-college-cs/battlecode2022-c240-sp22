@@ -154,7 +154,13 @@ public strictfp class RobotPlayer {
      * Run a single turn for a Miner.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
+    static Direction exploreDir = null;
+
     static void runMiner(RobotController rc) throws GameActionException {
+        if(exploreDir == null){
+            RobotPlayer.rng.setSeed(rc.getID());
+            exploreDir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
+        }
         // Try to mine on squares around us.
         MapLocation me = rc.getLocation();
         for (int dx = -1; dx <= 1; dx++) {
@@ -165,7 +171,7 @@ public strictfp class RobotPlayer {
                 while (rc.canMineGold(mineLocation)) {
                     rc.mineGold(mineLocation);
                 }
-                while ((rc.canMineLead(mineLocation)) || rc.senseLead(mineLocation) > 1) {
+                while ((rc.canMineLead(mineLocation)) && rc.senseLead(mineLocation) > 1) {
                     rc.mineLead(mineLocation);
                 }
             }
@@ -175,7 +181,7 @@ public strictfp class RobotPlayer {
         MapLocation[] nearbyLocations = rc.getAllLocationsWithinRadiusSquared(me,visionRadius);
         MapLocation targetLocation = null;
         for (MapLocation tryLocation : nearbyLocations){
-            if (rc.senseLead(tryLocation)>0 || rc.senseGold(tryLocation)>0){
+            if (rc.senseLead(tryLocation)>1 || rc.senseGold(tryLocation)>0){
                 targetLocation = tryLocation;
                 break;
             }
@@ -184,6 +190,12 @@ public strictfp class RobotPlayer {
             Direction toMove = me.directionTo(targetLocation);
             if (rc.canMove(toMove)){
                 rc.move(toMove);
+            }
+        } else {
+            if(rc.canMove(exploreDir)){
+                rc.move(exploreDir);
+            } else if (rc.onTheMap(rc.getLocation().add(exploreDir))){
+                exploreDir = exploreDir.opposite();
             }
         }
 
